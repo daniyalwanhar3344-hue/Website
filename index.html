@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Camera & Location Viewer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #f0f0f0;
+      margin: 0;
+      padding: 0;
+    }
+
+    h1 {
+      margin-top: 50px;
+    }
+
+    #loginForm {
+      margin-top: 30px;
+    }
+
+    #loginForm input {
+      padding: 10px;
+      font-size: 16px;
+      margin: 5px 0;
+      width: 200px;
+    }
+
+    #loginForm button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #loginForm button:hover {
+      background-color: #0056b3;
+    }
+
+    #video {
+      margin-top: 20px;
+      border: 2px solid #333;
+      max-width: 100%;
+      height: auto;
+    }
+
+    #location {
+      margin-top: 20px;
+      font-size: 18px;
+    }
+
+    #status {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Camera & Location Viewer</h1>
+
+  <div id="loginForm">
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+    <button id="loginBtn">Login</button>
+  </div>
+
+  <video id="video" autoplay playsinline></video>
+  <div id="location">Location: Loading...</div>
+  <div id="status">Status: Waiting for permission...</div>
+
+  <script>
+    const video = document.getElementById('video');
+    const locationDiv = document.getElementById('location');
+    const statusDiv = document.getElementById('status');
+    const loginBtn = document.getElementById('loginBtn');
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+
+    let isLoggedIn = false;
+
+    loginBtn.addEventListener('click', () => {
+      const username = usernameInput.value;
+      const password = passwordInput.value;
+
+      // Simple login check
+      if (username === "admin" && password === "password") {
+        isLoggedIn = true;
+        loginBtn.style.display = "none";
+        statusDiv.textContent = "Logged in. You can now view the camera and location.";
+        startCameraAndLocation();
+      } else {
+        alert("Invalid username or password.");
+      }
+    });
+
+    function startCameraAndLocation() {
+      // Access camera
+      navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+        .then(stream => {
+          video.srcObject = stream;
+          statusDiv.textContent = "Camera access granted.";
+        })
+        .catch(err => {
+          statusDiv.textContent = "Error accessing camera: " + err.message;
+        });
+
+      // Access location
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(position => {
+          locationDiv.textContent = `Location: Latitude: ${position.coords.latitude}, Longitude: ${position.coords.longitude}`;
+          statusDiv.textContent = "Location access granted.";
+        }, error => {
+          locationDiv.textContent = "Error accessing location: " + error.message;
+          statusDiv.textContent = "Location access denied.";
+        });
+      } else {
+        locationDiv.textContent = "Geolocation not supported.";
+        statusDiv.textContent = "Location access denied.";
+      }
+    }
+  </script>
+
+</body>
+</html>
