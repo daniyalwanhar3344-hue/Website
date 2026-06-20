@@ -37,8 +37,16 @@
       background-color: #0056b3;
     }
 
-    #video {
+    #userList {
+      margin-top: 30px;
+      font-size: 18px;
+    }
+
+    #videoContainer {
       margin-top: 20px;
+    }
+
+    #video {
       border: 2px solid #333;
       max-width: 100%;
       height: auto;
@@ -65,19 +73,26 @@
     <button id="loginBtn">Login</button>
   </div>
 
-  <video id="video" autoplay playsinline></video>
-  <div id="location">Location: Loading...</div>
+  <div id="userList">User List</div>
+
+  <div id="videoContainer">
+    <video id="video" autoplay playsinline></video>
+    <div id="location">Location: Loading...</div>
+  </div>
+
   <div id="status">Status: Waiting for permission...</div>
 
   <script>
     const loginBtn = document.getElementById('loginBtn');
     const usernameInput = document.getElementById('username');
     const passwordInput = document.getElementById('password');
+    const userList = document.getElementById('userList');
     const video = document.getElementById('video');
     const locationDiv = document.getElementById('location');
     const statusDiv = document.getElementById('status');
 
     let isLoggedIn = false;
+    let users = [];
 
     loginBtn.addEventListener('click', () => {
       const username = usernameInput.value;
@@ -86,38 +101,28 @@
       if (username === "admin" && password === "password") {
         isLoggedIn = true;
         loginBtn.style.display = "none";
-        statusDiv.textContent = "Logged in. You can now view the camera and location.";
-        startCameraAndLocation();
+        statusDiv.textContent = "Logged in. You can now view users' camera and location.";
+        userList.innerHTML = "Users: " + users.map(u => u.name).join(", ");
       } else {
         alert("Invalid username or password.");
       }
     });
 
-    function startCameraAndLocation() {
-      // Request camera access
-      navigator.mediaDevices.getUserMedia({ video: true, audio: false })
-        .then(stream => {
-          video.srcObject = stream;
-          statusDiv.textContent = "Camera access granted.";
-        })
-        .catch(err => {
-          statusDiv.textContent = "Error accessing camera: " + err.message;
-        });
+    // Simulate user data (you can replace with real data from a database)
+    users = [
+      { name: "User 1", camera: null, location: null },
+      { name: "User 2", camera: null, location: null },
+      { name: "User 3", camera: null, location: null }
+    ];
 
-      // Request location access
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(position => {
-          locationDiv.textContent = `Location: Latitude: ${position.coords.latitude}, Longitude: ${position.coords.longitude}`;
-          statusDiv.textContent = "Location access granted.";
-        }, error => {
-          locationDiv.textContent = "Error accessing location: " + error.message;
-          statusDiv.textContent = "Location access denied.";
-        });
+    // Simulate user camera and location data
+    setInterval(() => {
+      if (users.length > 0) {
+        userList.innerHTML = "Users: " + users.map(u => u.name).join(", ");
       } else {
-        locationDiv.textContent = "Geolocation not supported.";
-        statusDiv.textContent = "Location access denied.";
+        userList.innerHTML = "No users yet.";
       }
-    }
+    }, 1000);
   </script>
 
 </body>
