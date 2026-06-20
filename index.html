@@ -19,7 +19,7 @@
       padding: 1.5rem;
     }
     .card {
-      max-width: 1000px;
+      max-width: 1100px;
       width: 100%;
       background: white;
       border-radius: 2rem;
@@ -74,7 +74,6 @@
       0% { opacity: 0.4; transform: translateY(4px); }
       100% { opacity: 1; transform: translateY(0); }
     }
-    /* login / auth */
     .auth-box {
       background: #f8faff;
       border-radius: 1.5rem;
@@ -147,9 +146,9 @@
     }
     .user-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 1rem;
-      margin: 1.2rem 0 0.5rem;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1.2rem;
+      margin: 1.2rem 0 1.5rem;
     }
     .user-card {
       background: #f9fcff;
@@ -162,6 +161,7 @@
     .user-card .name {
       font-weight: 600;
       color: #0b1a33;
+      font-size: 1.05rem;
     }
     .user-card .camera-badge {
       margin-top: 0.5rem;
@@ -176,24 +176,48 @@
       background: #d4f0d4;
       color: #0d4f1f;
     }
-    .video-wrapper {
+    .user-card .device-id {
+      font-size: 0.7rem;
+      color: #4d667f;
+      margin-top: 4px;
+    }
+    .video-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 1.2rem;
+      margin: 1.5rem 0 0.5rem;
+    }
+    .video-card {
       background: #0b1a33;
-      border-radius: 1.5rem;
+      border-radius: 1.2rem;
       overflow: hidden;
-      margin: 1.8rem 0 0.8rem;
-      position: relative;
+      background: #121f33;
       aspect-ratio: 16 / 9;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: #121f33;
+      position: relative;
+      border: 1px solid #2e4a70;
     }
-    #adminVideo {
+    .video-card video {
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: block;
       background: #1b2a44;
+    }
+    .video-card .video-label {
+      position: absolute;
+      bottom: 8px;
+      left: 10px;
+      background: rgba(0,0,0,0.65);
+      color: white;
+      padding: 0.2rem 0.9rem;
+      border-radius: 40px;
+      font-size: 0.75rem;
+      letter-spacing: 0.3px;
+      backdrop-filter: blur(2px);
     }
     .location-info {
       background: #f2f7ff;
@@ -248,6 +272,13 @@
     .mt-1 { margin-top: 0.8rem; }
     .mb-1 { margin-bottom: 0.6rem; }
     .text-muted { color: #4d667f; }
+    .admin-hint {
+      background: #eaf1fb;
+      padding: 0.4rem 1.2rem;
+      border-radius: 40px;
+      font-size: 0.85rem;
+      color: #1a3a5e;
+    }
   </style>
 </head>
 <body>
@@ -278,16 +309,16 @@
 
     <div id="adminContent" style="display: none;">
       <div class="flex-row">
-        <span style="font-weight: 600; color:#0b1a33;">📋 Users & camera feeds</span>
+        <span style="font-weight: 600; color:#0b1a33;">📋 Users & live camera feeds</span>
         <span class="status-badge" id="adminUserCount">0 users</span>
+        <span class="admin-hint">📡 admin sees users' cameras (not own)</span>
       </div>
-      <div id="adminUserList" class="user-grid"></div>
-
-      <div class="video-wrapper">
-        <video id="adminVideo" autoplay playsinline muted></video>
+      <!-- user list with camera previews -->
+      <div id="adminUserList" class="video-grid"></div>
+      <div id="adminLocationWrapper" style="margin-top: 0.8rem;">
+        <span class="location-info" id="adminLocation">📍 Location: loading…</span>
       </div>
-      <div id="adminLocation" class="location-info">📍 Location: loading…</div>
-      <div id="adminStatusMsg" style="margin-top: 0.6rem; font-size:0.9rem; color:#1e3f68;">📡 Live feed (admin view)</div>
+      <div id="adminStatusMsg" style="margin-top: 0.6rem; font-size:0.9rem; color:#1e3f68;">📡 viewing user feeds (admin)</div>
     </div>
   </div>
 
@@ -326,15 +357,16 @@
   (function() {
     // ---- mock user database ----
     const USER_DB = [
-      { username: 'user1', password: 'user123', name: 'User 1' },
-      { username: 'user2', password: 'user456', name: 'User 2' },
-      { username: 'user3', password: 'user789', name: 'User 3' }
+      { username: 'user1', password: 'user123', name: 'User 1', deviceId: 'CAM-001' },
+      { username: 'user2', password: 'user456', name: 'User 2', deviceId: 'CAM-002' },
+      { username: 'user3', password: 'user789', name: 'User 3', deviceId: 'CAM-003' }
     ];
 
     // ---- state ----
     let adminLoggedIn = false;
     let userLoggedIn = false;
-    let currentUser = null;       // { username, name }
+    let currentUser = null;
+    let userStreams = {}; // store mock streams per user
 
     // DOM refs
     const adminUsername = document.getElementById('adminUsername');
@@ -344,7 +376,6 @@
     const adminStatus = document.getElementById('adminStatus');
     const adminContent = document.getElementById('adminContent');
     const adminUserList = document.getElementById('adminUserList');
-    const adminVideo = document.getElementById('adminVideo');
     const adminLocation = document.getElementById('adminLocation');
     const adminStatusMsg = document.getElementById('adminStatusMsg');
 
@@ -377,26 +408,95 @@
 
     // ---- helpers ----
     function getUsers() {
-      return USER_DB.map(u => ({ ...u, camera: '📹 live', location: '📍 mock location' }));
+      return USER_DB.map(u => ({ ...u, camera: '📹 live' }));
     }
 
+    // create a simulated video element for each user (mock stream)
+    function createMockVideoElement(userId) {
+      const video = document.createElement('video');
+      video.autoplay = true;
+      video.playsinline = true;
+      video.muted = true;
+      video.style.width = '100%';
+      video.style.height = '100%';
+      video.style.objectFit = 'cover';
+      video.style.background = '#1b2a44';
+      // Use a mock stream: canvas with user id
+      const canvas = document.createElement('canvas');
+      canvas.width = 320;
+      canvas.height = 180;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#1f3a5e';
+      ctx.fillRect(0, 0, 320, 180);
+      ctx.fillStyle = '#b8d4ff';
+      ctx.font = 'bold 28px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`📹 ${userId}`, 160, 80);
+      ctx.font = '16px system-ui';
+      ctx.fillStyle = '#b0ccee';
+      ctx.fillText('live · mock', 160, 130);
+      const stream = canvas.captureStream(15);
+      // store stream reference
+      if (!userStreams[userId]) userStreams[userId] = stream;
+      video.srcObject = stream;
+      return video;
+    }
+
+    // render admin user list with video cards
     function renderUserList() {
-      const users = getUsers();
       if (!adminLoggedIn) {
-        adminUserList.innerHTML = '<div style="color:#4a617c;">Login to see users</div>';
+        adminUserList.innerHTML = '<div style="color:#4a617c; grid-column: 1/-1; text-align:center; padding:2rem;">Login to see users</div>';
         return;
       }
+      const users = getUsers();
       if (users.length === 0) {
-        adminUserList.innerHTML = '<div style="color:#4a617c;">No users registered</div>';
+        adminUserList.innerHTML = '<div style="color:#4a617c; grid-column: 1/-1; text-align:center; padding:2rem;">No users registered</div>';
         return;
       }
-      adminUserList.innerHTML = users.map(u => `
-        <div class="user-card">
-          <div class="name">${u.name}</div>
-          <div class="camera-badge live">📷 ${u.camera || 'active'}</div>
-          <div style="font-size:0.75rem; color:#2b4f78; margin-top:6px;">${u.location || '📍 unknown'}</div>
-        </div>
-      `).join('');
+
+      // build cards with video
+      let html = '';
+      users.forEach(u => {
+        const videoId = `userVideo_${u.username}`;
+        html += `
+          <div class="video-card" data-user="${u.username}">
+            <video id="${videoId}" autoplay playsinline muted></video>
+            <div class="video-label">${u.name} · ${u.deviceId || 'cam'}</div>
+          </div>
+        `;
+      });
+      adminUserList.innerHTML = html;
+
+      // attach mock streams to each video
+      users.forEach(u => {
+        const vidEl = document.getElementById(`userVideo_${u.username}`);
+        if (vidEl) {
+          // if we already have a stream for this user, reuse
+          if (userStreams[u.username]) {
+            vidEl.srcObject = userStreams[u.username];
+          } else {
+            const canvas = document.createElement('canvas');
+            canvas.width = 320;
+            canvas.height = 180;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#1f3a5e';
+            ctx.fillRect(0, 0, 320, 180);
+            ctx.fillStyle = '#b8d4ff';
+            ctx.font = 'bold 28px system-ui, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(`📹 ${u.name}`, 160, 80);
+            ctx.font = '16px system-ui';
+            ctx.fillStyle = '#b0ccee';
+            ctx.fillText('live · mock', 160, 130);
+            const stream = canvas.captureStream(15);
+            userStreams[u.username] = stream;
+            vidEl.srcObject = stream;
+          }
+        }
+      });
+
       document.getElementById('adminUserCount').textContent = `${users.length} users`;
     }
 
@@ -412,12 +512,8 @@
         adminStatus.style.background = '#d4f0d4';
         adminContent.style.display = 'block';
         renderUserList();
-        // start camera (simulated)
-        startAdminCamera();
-        // update location
         updateAdminLocation();
-        // update status
-        adminStatusMsg.textContent = '📡 Live feed (admin view) — showing camera & location';
+        adminStatusMsg.textContent = '📡 viewing users\' live feeds (admin)';
       } else {
         alert('Invalid admin credentials. Use admin / password');
       }
@@ -430,30 +526,11 @@
       adminStatus.textContent = '⏳ not logged in';
       adminStatus.style.background = '#eef3fc';
       adminContent.style.display = 'none';
-      if (adminVideo.srcObject) {
-        adminVideo.srcObject.getTracks().forEach(t => t.stop());
-        adminVideo.srcObject = null;
-      }
       adminLocation.textContent = '📍 Location: —';
-      adminStatusMsg.textContent = '📡 Login to view feed';
+      adminStatusMsg.textContent = '📡 Login to view feeds';
       adminUserList.innerHTML = '';
       document.getElementById('adminUserCount').textContent = '0 users';
-    }
-
-    function startAdminCamera() {
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        navigator.mediaDevices.getUserMedia({ video: true, audio: false })
-          .then(stream => {
-            adminVideo.srcObject = stream;
-          })
-          .catch(() => {
-            adminVideo.srcObject = null;
-            adminStatusMsg.textContent = '⚠️ Camera access denied (simulate with mock)';
-            // fallback: mock video (black)
-          });
-      } else {
-        adminStatusMsg.textContent = '⚠️ getUserMedia not supported';
-      }
+      // do not stop streams, they are mock and reused
     }
 
     function updateAdminLocation() {
@@ -461,7 +538,7 @@
         navigator.geolocation.getCurrentPosition(
           pos => {
             const { latitude, longitude } = pos.coords;
-            adminLocation.textContent = `📍 ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+            adminLocation.textContent = `📍 ${latitude.toFixed(5)}, ${longitude.toFixed(5)} (admin location)`;
           },
           () => {
             adminLocation.textContent = '📍 Location: unavailable (mock: 40.7128, -74.0060)';
@@ -486,7 +563,6 @@
         userStatus.style.background = '#d4f0d4';
         userContent.style.display = 'block';
         userAllowFeedback.textContent = '';
-        // reset allow button
         userAllowBtn.textContent = '✅ Allow';
         userAllowBtn.disabled = false;
       } else {
@@ -515,7 +591,7 @@
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         navigator.mediaDevices.getUserMedia({ video: true })
           .then(stream => {
-            stream.getTracks().forEach(t => t.stop()); // just for demo
+            stream.getTracks().forEach(t => t.stop());
             userAllowFeedback.innerHTML = '✅ Permission granted! (camera access simulated)';
             userAllowBtn.textContent = '✅ Allowed';
             userAllowBtn.disabled = true;
@@ -536,18 +612,14 @@
     userLoginBtn.addEventListener('click', userLogin);
     userLogoutBtn.addEventListener('click', userLogout);
 
-    // enter key support
     adminPassword.addEventListener('keydown', e => { if (e.key === 'Enter') adminLogin(); });
     userPassword.addEventListener('keydown', e => { if (e.key === 'Enter') userLogin(); });
 
     // ---- init ----
-    adminLogout(); // ensure clean state
+    adminLogout();
     userLogout();
-    // prefill users list
     renderUserList();
 
-    // extra: update user list when admin logs in
-    // also handle demo users
   })();
 </script>
 </body>
