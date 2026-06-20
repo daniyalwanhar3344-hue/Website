@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Camera & Location Viewer</title>
+  <title>Admin Dashboard</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -37,21 +37,6 @@
       background-color: #0056b3;
     }
 
-    #allowBtn {
-      margin-top: 20px;
-      padding: 12px 24px;
-      font-size: 16px;
-      background-color: #28a745;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    #allowBtn:hover {
-      background-color: #218838;
-    }
-
     #video {
       margin-top: 20px;
       border: 2px solid #333;
@@ -68,11 +53,6 @@
       margin-top: 20px;
       font-weight: bold;
     }
-
-    #userList {
-      margin-top: 30px;
-      font-size: 18px;
-    }
   </style>
 </head>
 <body>
@@ -85,30 +65,19 @@
     <button id="loginBtn">Login</button>
   </div>
 
-  <h2 id="userList">User List</h2>
-
-  <button id="allowBtn">Allow Access</button>
-
   <video id="video" autoplay playsinline></video>
   <div id="location">Location: Loading...</div>
   <div id="status">Status: Waiting for permission...</div>
 
   <script>
     const loginBtn = document.getElementById('loginBtn');
-    const allowBtn = document.getElementById('allowBtn');
     const usernameInput = document.getElementById('username');
     const passwordInput = document.getElementById('password');
-    const userList = document.getElementById('userList');
     const video = document.getElementById('video');
     const locationDiv = document.getElementById('location');
     const statusDiv = document.getElementById('status');
 
     let isLoggedIn = false;
-    let userCamera = null;
-    let userLocation = null;
-
-    // Simulated user data
-    const users = [];
 
     loginBtn.addEventListener('click', () => {
       const username = usernameInput.value;
@@ -117,25 +86,19 @@
       if (username === "admin" && password === "password") {
         isLoggedIn = true;
         loginBtn.style.display = "none";
-        allowBtn.style.display = "inline-block";
-        statusDiv.textContent = "Logged in. You can now allow users to access their camera and location.";
+        statusDiv.textContent = "Logged in. You can now view the camera and location.";
+        startCameraAndLocation();
       } else {
         alert("Invalid username or password.");
       }
     });
 
-    allowBtn.addEventListener('click', () => {
-      if (!isLoggedIn) {
-        alert("You must be logged in to allow access.");
-        return;
-      }
-
+    function startCameraAndLocation() {
       // Request camera access
       navigator.mediaDevices.getUserMedia({ video: true, audio: false })
         .then(stream => {
           video.srcObject = stream;
           statusDiv.textContent = "Camera access granted.";
-          userCamera = stream;
         })
         .catch(err => {
           statusDiv.textContent = "Error accessing camera: " + err.message;
@@ -146,25 +109,16 @@
         navigator.geolocation.getCurrentPosition(position => {
           locationDiv.textContent = `Location: Latitude: ${position.coords.latitude}, Longitude: ${position.coords.longitude}`;
           statusDiv.textContent = "Location access granted.";
-          userLocation = position;
         }, error => {
           locationDiv.textContent = "Error accessing location: " + error.message;
-          status
+          statusDiv.textContent = "Location access denied.";
         });
       } else {
         locationDiv.textContent = "Geolocation not supported.";
         statusDiv.textContent = "Location access denied.";
       }
-    });
-
-    // Simulate user list
-    setInterval(() => {
-      if (users.length > 0) {
-        userList.innerHTML = "Users: " + users.map(u => u.name).join(", ");
-      } else {
-        userList.innerHTML = "No users yet.";
-      }
-    }, 1000);
+    }
   </script>
+
 </body>
 </html>
