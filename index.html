@@ -2,128 +2,553 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Admin Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin / User Dashboard</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      background-color: #f0f0f0;
+    * {
+      box-sizing: border-box;
       margin: 0;
-      padding: 0;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
     }
-
-    #loginForm {
-      margin-top: 30px;
+    body {
+      background: #f2f5f9;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1.5rem;
     }
-
-    #loginForm input {
-      padding: 10px;
-      font-size: 16px;
-      margin: 5px 0;
-      width: 200px;
+    .card {
+      max-width: 1000px;
+      width: 100%;
+      background: white;
+      border-radius: 2rem;
+      padding: 2rem 2rem 2.5rem;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.08), 0 8px 16px rgba(0,0,0,0.06);
     }
-
-    #loginForm button {
-      padding: 10px 20px;
-      font-size: 16px;
-      background-color: #007BFF;
-      color: white;
+    h1 {
+      font-weight: 600;
+      font-size: 1.8rem;
+      color: #0b1a33;
+      margin-top: 0.2rem;
+      margin-bottom: 1.8rem;
+      letter-spacing: -0.3px;
+      border-left: 6px solid #2469f0;
+      padding-left: 1rem;
+    }
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      border-bottom: 2px solid #e6edf4;
+      padding-bottom: 0.5rem;
+    }
+    .tab-btn {
+      background: transparent;
       border: none;
-      border-radius: 5px;
+      padding: 0.6rem 1.8rem;
+      font-size: 1rem;
+      font-weight: 500;
+      border-radius: 40px;
+      color: #4a5b6e;
       cursor: pointer;
+      transition: 0.2s;
+      letter-spacing: 0.2px;
     }
-
-    #loginForm button:hover {
-      background-color: #0056b3;
+    .tab-btn.active {
+      background: #2469f0;
+      color: white;
+      box-shadow: 0 4px 8px rgba(36, 105, 240, 0.2);
     }
-
-    #userList {
-      margin-top: 30px;
-      font-size: 18px;
+    .tab-btn:not(.active):hover {
+      background: #eef3fc;
     }
-
-    #videoContainer {
-      margin-top: 20px;
+    .panel {
+      display: none;
+      animation: fade 0.25s ease;
     }
-
-    #video {
-      border: 2px solid #333;
-      max-width: 100%;
-      height: auto;
+    .panel.active {
+      display: block;
     }
-
-    #location {
-      margin-top: 20px;
-      font-size: 18px;
+    @keyframes fade {
+      0% { opacity: 0.4; transform: translateY(4px); }
+      100% { opacity: 1; transform: translateY(0); }
     }
-
-    #status {
-      margin-top: 20px;
-      font-weight: bold;
+    /* login / auth */
+    .auth-box {
+      background: #f8faff;
+      border-radius: 1.5rem;
+      padding: 1.8rem 2rem;
+      margin-bottom: 2rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: 0.8rem 1.2rem;
+      border: 1px solid #e2eaf3;
     }
+    .auth-box label {
+      font-weight: 500;
+      color: #1e2c41;
+      font-size: 0.9rem;
+      margin-right: 0.2rem;
+    }
+    .auth-box input {
+      padding: 0.6rem 1rem;
+      border: 1px solid #d0dbe8;
+      border-radius: 60px;
+      font-size: 0.95rem;
+      background: white;
+      width: 150px;
+      transition: 0.2s;
+    }
+    .auth-box input:focus {
+      outline: none;
+      border-color: #2469f0;
+      box-shadow: 0 0 0 3px rgba(36,105,240,0.15);
+    }
+    .auth-box .login-btn {
+      background: #0b1a33;
+      border: none;
+      color: white;
+      font-weight: 500;
+      padding: 0.6rem 1.8rem;
+      border-radius: 60px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: 0.2s;
+      margin-left: auto;
+    }
+    .auth-box .login-btn:hover {
+      background: #1d3b66;
+      transform: scale(0.97);
+    }
+    .auth-box .logout-btn {
+      background: #dce3ed;
+      border: none;
+      color: #1e2c41;
+      font-weight: 500;
+      padding: 0.6rem 1.8rem;
+      border-radius: 60px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .auth-box .logout-btn:hover {
+      background: #cbd5e3;
+    }
+    .status-badge {
+      background: #eef3fc;
+      padding: 0.3rem 1.2rem;
+      border-radius: 40px;
+      font-size: 0.85rem;
+      color: #1e3a5f;
+      font-weight: 450;
+      display: inline-block;
+    }
+    .user-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 1rem;
+      margin: 1.2rem 0 0.5rem;
+    }
+    .user-card {
+      background: #f9fcff;
+      border: 1px solid #e2eaf3;
+      border-radius: 1.2rem;
+      padding: 1rem 0.8rem 0.8rem;
+      text-align: center;
+      transition: 0.1s ease;
+    }
+    .user-card .name {
+      font-weight: 600;
+      color: #0b1a33;
+    }
+    .user-card .camera-badge {
+      margin-top: 0.5rem;
+      font-size: 0.8rem;
+      background: #e6edf4;
+      padding: 0.25rem 0.8rem;
+      border-radius: 40px;
+      display: inline-block;
+      color: #1a304a;
+    }
+    .user-card .camera-badge.live {
+      background: #d4f0d4;
+      color: #0d4f1f;
+    }
+    .video-wrapper {
+      background: #0b1a33;
+      border-radius: 1.5rem;
+      overflow: hidden;
+      margin: 1.8rem 0 0.8rem;
+      position: relative;
+      aspect-ratio: 16 / 9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #121f33;
+    }
+    #adminVideo {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      background: #1b2a44;
+    }
+    .location-info {
+      background: #f2f7ff;
+      padding: 0.7rem 1.2rem;
+      border-radius: 60px;
+      display: inline-block;
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+      border: 1px solid #d9e4f0;
+    }
+    .user-allow-area {
+      background: #f3f9fe;
+      border-radius: 2rem;
+      padding: 1.8rem 2rem;
+      text-align: center;
+      border: 1px solid #dce8f5;
+    }
+    .allow-btn {
+      background: #2469f0;
+      border: none;
+      font-weight: 600;
+      font-size: 1.3rem;
+      padding: 0.9rem 3rem;
+      border-radius: 80px;
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 6px 14px rgba(36,105,240,0.25);
+      transition: 0.15s;
+      letter-spacing: 0.3px;
+    }
+    .allow-btn:hover {
+      background: #1a56d0;
+      transform: scale(0.97);
+    }
+    .allow-btn:active {
+      transform: scale(0.94);
+    }
+    .footnote {
+      color: #4a617c;
+      font-size: 0.85rem;
+      margin-top: 1.5rem;
+      border-top: 1px solid #e6edf4;
+      padding-top: 1.5rem;
+      text-align: center;
+    }
+    .flex-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 1rem 1.8rem;
+    }
+    .mt-1 { margin-top: 0.8rem; }
+    .mb-1 { margin-bottom: 0.6rem; }
+    .text-muted { color: #4d667f; }
   </style>
 </head>
 <body>
+<div class="card">
+  <h1>🔐 Dashboard</h1>
 
-  <h1>Admin Login</h1>
-
-  <div id="loginForm">
-    <input type="text" id="username" placeholder="Username" />
-    <input type="password" id="password" placeholder="Password" />
-    <button id="loginBtn">Login</button>
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="tabAdmin">👤 Admin</button>
+    <button class="tab-btn" data-tab="tabUser">🧑 User</button>
   </div>
 
-  <div id="userList">User List</div>
+  <!-- ========== ADMIN PANEL ========== -->
+  <div id="tabAdmin" class="panel active">
+    <div class="auth-box" id="adminAuthBox">
+      <div>
+        <label>👤 Admin</label>
+        <input type="text" id="adminUsername" placeholder="admin" value="admin" />
+      </div>
+      <div>
+        <label>🔑</label>
+        <input type="password" id="adminPassword" placeholder="password" value="password" />
+      </div>
+      <button class="login-btn" id="adminLoginBtn">Login</button>
+      <button class="logout-btn" id="adminLogoutBtn" style="display:none;">Logout</button>
+      <span id="adminStatus" class="status-badge">⏳ not logged in</span>
+    </div>
 
-  <div id="videoContainer">
-    <video id="video" autoplay playsinline></video>
-    <div id="location">Location: Loading...</div>
+    <div id="adminContent" style="display: none;">
+      <div class="flex-row">
+        <span style="font-weight: 600; color:#0b1a33;">📋 Users & camera feeds</span>
+        <span class="status-badge" id="adminUserCount">0 users</span>
+      </div>
+      <div id="adminUserList" class="user-grid"></div>
+
+      <div class="video-wrapper">
+        <video id="adminVideo" autoplay playsinline muted></video>
+      </div>
+      <div id="adminLocation" class="location-info">📍 Location: loading…</div>
+      <div id="adminStatusMsg" style="margin-top: 0.6rem; font-size:0.9rem; color:#1e3f68;">📡 Live feed (admin view)</div>
+    </div>
   </div>
 
-  <div id="status">Status: Waiting for permission...</div>
+  <!-- ========== USER PANEL ========== -->
+  <div id="tabUser" class="panel">
+    <div class="auth-box" id="userAuthBox">
+      <div>
+        <label>🧑 User</label>
+        <input type="text" id="userUsername" placeholder="user1" value="user1" />
+      </div>
+      <div>
+        <label>🔑</label>
+        <input type="password" id="userPassword" placeholder="user123" value="user123" />
+      </div>
+      <button class="login-btn" id="userLoginBtn">Login</button>
+      <button class="logout-btn" id="userLogoutBtn" style="display:none;">Logout</button>
+      <span id="userStatus" class="status-badge">⏳ not logged in</span>
+    </div>
 
-  <script>
-    const loginBtn = document.getElementById('loginBtn');
-    const usernameInput = document.getElementById('username');
-    const passwordInput = document.getElementById('password');
-    const userList = document.getElementById('userList');
-    const video = document.getElementById('video');
-    const locationDiv = document.getElementById('location');
-    const statusDiv = document.getElementById('status');
+    <div id="userContent" style="display: none;">
+      <div class="user-allow-area">
+        <p style="font-weight: 450; color:#1f3857; margin-bottom: 1.2rem;">🔘 You are logged in as a standard user.</p>
+        <button class="allow-btn" id="userAllowBtn">✅ Allow</button>
+        <p style="margin-top: 1rem; color:#3d5a78; font-size:0.9rem;">Click "Allow" to simulate granting camera permission.</p>
+        <div id="userAllowFeedback" style="margin-top: 1.2rem; font-weight: 500; color:#0d4f1f;"></div>
+      </div>
+    </div>
+  </div>
 
-    let isLoggedIn = false;
-    let users = [];
+  <div class="footnote">
+    Admin: admin / password &nbsp;|&nbsp; Users: user1/user123, user2/user456, user3/user789
+  </div>
+</div>
 
-    loginBtn.addEventListener('click', () => {
-      const username = usernameInput.value;
-      const password = passwordInput.value;
+<script>
+  (function() {
+    // ---- mock user database ----
+    const USER_DB = [
+      { username: 'user1', password: 'user123', name: 'User 1' },
+      { username: 'user2', password: 'user456', name: 'User 2' },
+      { username: 'user3', password: 'user789', name: 'User 3' }
+    ];
 
-      if (username === "admin" && password === "password") {
-        isLoggedIn = true;
-        loginBtn.style.display = "none";
-        statusDiv.textContent = "Logged in. You can now view users' camera and location.";
-        userList.innerHTML = "Users: " + users.map(u => u.name).join(", ");
+    // ---- state ----
+    let adminLoggedIn = false;
+    let userLoggedIn = false;
+    let currentUser = null;       // { username, name }
+
+    // DOM refs
+    const adminUsername = document.getElementById('adminUsername');
+    const adminPassword = document.getElementById('adminPassword');
+    const adminLoginBtn = document.getElementById('adminLoginBtn');
+    const adminLogoutBtn = document.getElementById('adminLogoutBtn');
+    const adminStatus = document.getElementById('adminStatus');
+    const adminContent = document.getElementById('adminContent');
+    const adminUserList = document.getElementById('adminUserList');
+    const adminVideo = document.getElementById('adminVideo');
+    const adminLocation = document.getElementById('adminLocation');
+    const adminStatusMsg = document.getElementById('adminStatusMsg');
+
+    const userUsername = document.getElementById('userUsername');
+    const userPassword = document.getElementById('userPassword');
+    const userLoginBtn = document.getElementById('userLoginBtn');
+    const userLogoutBtn = document.getElementById('userLogoutBtn');
+    const userStatus = document.getElementById('userStatus');
+    const userContent = document.getElementById('userContent');
+    const userAllowBtn = document.getElementById('userAllowBtn');
+    const userAllowFeedback = document.getElementById('userAllowFeedback');
+
+    // ---- tabs ----
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const panels = {
+      tabAdmin: document.getElementById('tabAdmin'),
+      tabUser: document.getElementById('tabUser')
+    };
+
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', function() {
+        tabBtns.forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        const tabId = this.dataset.tab;
+        Object.keys(panels).forEach(id => {
+          panels[id].classList.toggle('active', id === tabId);
+        });
+      });
+    });
+
+    // ---- helpers ----
+    function getUsers() {
+      return USER_DB.map(u => ({ ...u, camera: '📹 live', location: '📍 mock location' }));
+    }
+
+    function renderUserList() {
+      const users = getUsers();
+      if (!adminLoggedIn) {
+        adminUserList.innerHTML = '<div style="color:#4a617c;">Login to see users</div>';
+        return;
+      }
+      if (users.length === 0) {
+        adminUserList.innerHTML = '<div style="color:#4a617c;">No users registered</div>';
+        return;
+      }
+      adminUserList.innerHTML = users.map(u => `
+        <div class="user-card">
+          <div class="name">${u.name}</div>
+          <div class="camera-badge live">📷 ${u.camera || 'active'}</div>
+          <div style="font-size:0.75rem; color:#2b4f78; margin-top:6px;">${u.location || '📍 unknown'}</div>
+        </div>
+      `).join('');
+      document.getElementById('adminUserCount').textContent = `${users.length} users`;
+    }
+
+    // ---- admin login ----
+    function adminLogin() {
+      const uname = adminUsername.value.trim();
+      const pwd = adminPassword.value.trim();
+      if (uname === 'admin' && pwd === 'password') {
+        adminLoggedIn = true;
+        adminLoginBtn.style.display = 'none';
+        adminLogoutBtn.style.display = 'inline-block';
+        adminStatus.textContent = '✅ admin logged in';
+        adminStatus.style.background = '#d4f0d4';
+        adminContent.style.display = 'block';
+        renderUserList();
+        // start camera (simulated)
+        startAdminCamera();
+        // update location
+        updateAdminLocation();
+        // update status
+        adminStatusMsg.textContent = '📡 Live feed (admin view) — showing camera & location';
       } else {
-        alert("Invalid username or password.");
+        alert('Invalid admin credentials. Use admin / password');
+      }
+    }
+
+    function adminLogout() {
+      adminLoggedIn = false;
+      adminLoginBtn.style.display = 'inline-block';
+      adminLogoutBtn.style.display = 'none';
+      adminStatus.textContent = '⏳ not logged in';
+      adminStatus.style.background = '#eef3fc';
+      adminContent.style.display = 'none';
+      if (adminVideo.srcObject) {
+        adminVideo.srcObject.getTracks().forEach(t => t.stop());
+        adminVideo.srcObject = null;
+      }
+      adminLocation.textContent = '📍 Location: —';
+      adminStatusMsg.textContent = '📡 Login to view feed';
+      adminUserList.innerHTML = '';
+      document.getElementById('adminUserCount').textContent = '0 users';
+    }
+
+    function startAdminCamera() {
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+          .then(stream => {
+            adminVideo.srcObject = stream;
+          })
+          .catch(() => {
+            adminVideo.srcObject = null;
+            adminStatusMsg.textContent = '⚠️ Camera access denied (simulate with mock)';
+            // fallback: mock video (black)
+          });
+      } else {
+        adminStatusMsg.textContent = '⚠️ getUserMedia not supported';
+      }
+    }
+
+    function updateAdminLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          pos => {
+            const { latitude, longitude } = pos.coords;
+            adminLocation.textContent = `📍 ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+          },
+          () => {
+            adminLocation.textContent = '📍 Location: unavailable (mock: 40.7128, -74.0060)';
+          }
+        );
+      } else {
+        adminLocation.textContent = '📍 Geolocation not supported (mock: 40.7128, -74.0060)';
+      }
+    }
+
+    // ---- user login ----
+    function userLogin() {
+      const uname = userUsername.value.trim();
+      const pwd = userPassword.value.trim();
+      const found = USER_DB.find(u => u.username === uname && u.password === pwd);
+      if (found) {
+        userLoggedIn = true;
+        currentUser = found;
+        userLoginBtn.style.display = 'none';
+        userLogoutBtn.style.display = 'inline-block';
+        userStatus.textContent = `✅ logged in as ${found.name}`;
+        userStatus.style.background = '#d4f0d4';
+        userContent.style.display = 'block';
+        userAllowFeedback.textContent = '';
+        // reset allow button
+        userAllowBtn.textContent = '✅ Allow';
+        userAllowBtn.disabled = false;
+      } else {
+        alert('Invalid user credentials. Try user1/user123, user2/user456, user3/user789');
+      }
+    }
+
+    function userLogout() {
+      userLoggedIn = false;
+      currentUser = null;
+      userLoginBtn.style.display = 'inline-block';
+      userLogoutBtn.style.display = 'none';
+      userStatus.textContent = '⏳ not logged in';
+      userStatus.style.background = '#eef3fc';
+      userContent.style.display = 'none';
+      userAllowFeedback.textContent = '';
+    }
+
+    // ---- allow button (user) ----
+    userAllowBtn.addEventListener('click', function() {
+      if (!userLoggedIn) {
+        alert('Please login first.');
+        return;
+      }
+      // Simulate permission request
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ video: true })
+          .then(stream => {
+            stream.getTracks().forEach(t => t.stop()); // just for demo
+            userAllowFeedback.innerHTML = '✅ Permission granted! (camera access simulated)';
+            userAllowBtn.textContent = '✅ Allowed';
+            userAllowBtn.disabled = true;
+          })
+          .catch(() => {
+            userAllowFeedback.innerHTML = '⚠️ Permission denied (simulated). Click again.';
+          });
+      } else {
+        userAllowFeedback.innerHTML = '✅ Allow clicked (simulated) — camera API not available.';
+        userAllowBtn.textContent = '✅ Allowed';
+        userAllowBtn.disabled = true;
       }
     });
 
-    // Add three temporary users
-    users = [
-      { name: "User 1", camera: null, location: null },
-      { name: "User 2", camera: null, location: null },
-      { name: "User 3", camera: null, location: null }
-    ];
+    // ---- event listeners ----
+    adminLoginBtn.addEventListener('click', adminLogin);
+    adminLogoutBtn.addEventListener('click', adminLogout);
+    userLoginBtn.addEventListener('click', userLogin);
+    userLogoutBtn.addEventListener('click', userLogout);
 
-    // Simulate user camera and location data
-    setInterval(() => {
-      if (users.length > 0) {
-        userList.innerHTML = "Users: " + users.map(u => u.name).join(", ");
-      } else {
-        userList.innerHTML = "No users yet.";
-      }
-    }, 1000);
-  </script>
+    // enter key support
+    adminPassword.addEventListener('keydown', e => { if (e.key === 'Enter') adminLogin(); });
+    userPassword.addEventListener('keydown', e => { if (e.key === 'Enter') userLogin(); });
 
+    // ---- init ----
+    adminLogout(); // ensure clean state
+    userLogout();
+    // prefill users list
+    renderUserList();
+
+    // extra: update user list when admin logs in
+    // also handle demo users
+  })();
+</script>
 </body>
 </html>
