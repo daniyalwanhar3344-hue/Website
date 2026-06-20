@@ -149,7 +149,7 @@
           userLocation = position;
         }, error => {
           locationDiv.textContent = "Error accessing location: " + error.message;
-          statusDiv.textContent = "Location access denied.";
+          status
         });
       } else {
         locationDiv.textContent = "Geolocation not supported.";
